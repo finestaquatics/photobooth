@@ -1,73 +1,118 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Photo Booth</title>
 
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<style>
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:#111;
+color:white;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
 
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+#container{
+position:relative;
+width:90vw;
+max-width:500px;
+aspect-ratio:1/1;
+margin-top:20px;
+overflow:hidden;
+}
 
-  <style>
-    body {
-      margin:0;
-    }
+video{
+width:100%;
+height:100%;
+object-fit:cover;
+}
 
-    #photoButton {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 999;
-      padding: 15px;
-      font-size: 18px;
-    }
-  </style>
+#frame{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+}
+
+button{
+margin-top:20px;
+padding:15px 25px;
+font-size:18px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+canvas{
+display:none;
+}
+</style>
 </head>
 
 <body>
 
-<button id="photoButton">
-Take Photo
-</button>
+<h2>Photo Booth</h2>
 
-<a-scene
-mindar-image="uiScanning:no"
-embedded
-color-space="sRGB"
-renderer="colorManagement:true">
+<div id="container">
+<video id="video" autoplay playsinline></video>
+<img id="frame">
+</div>
 
-<a-camera
-position="0 0 0"
-look-controls="enabled:false">
-</a-camera>
+<button id="snap">Take Photo</button>
 
-<a-entity id="fish"></a-entity>
-
-</a-scene>
+<canvas id="canvas"></canvas>
 
 <script>
 
-const params =
-new URLSearchParams(window.location.search);
+const params=new URLSearchParams(window.location.search);
 
-const fish =
-params.get("fish") || "salmon";
+const frame=params.get("frame")||"default";
 
-const models = {
-  salmon: "models/salmon.glb",
-  trout: "models/trout.glb",
-  cod: "models/cod.glb",
-  pike: "models/pike.glb"
-};
+document.getElementById("frame").src=
+"frames/"+frame+".png";
 
-document.querySelector("#fish")
-.setAttribute("gltf-model", models[fish]);
+const video=document.getElementById("video");
 
-document.querySelector("#fish")
-.setAttribute("position", "0 0 -2");
+navigator.mediaDevices.getUserMedia({
+video:{
+facingMode:"user"
+}
+})
+.then(stream=>{
+video.srcObject=stream;
+});
 
-document.querySelector("#fish")
-.setAttribute("scale", "0.5 0.5 0.5");
+document.getElementById("snap")
+.addEventListener("click",()=>{
+
+const canvas=document.getElementById("canvas");
+
+canvas.width=1080;
+canvas.height=1080;
+
+const ctx=canvas.getContext("2d");
+
+ctx.drawImage(video,0,0,1080,1080);
+
+const frameImg=document.getElementById("frame");
+
+ctx.drawImage(frameImg,0,0,1080,1080);
+
+const link=document.createElement("a");
+
+link.download="photo.png";
+
+link.href=canvas.toDataURL();
+
+link.click();
+
+});
 
 </script>
 
